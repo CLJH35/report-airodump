@@ -30,9 +30,6 @@ sudo iw dev wlan0 set type monitor
 sudo ip link set wlan0 up
 ```
 
-NetworkManager가 채널을 계속 변경하면 해당 인터페이스를 관리 대상에서 제외하거나
-`airmon-ng`로 별도의 monitor interface를 만드는 편이 좋습니다.
-
 ## 빌드 및 실행
 
 ```sh
@@ -40,30 +37,3 @@ make
 sudo ./airodump mon0
 ```
 
-채널 호핑을 사용할 때:
-
-```sh
-sudo ./airodump mon0 --channels 1,6,11 --hop-ms 500
-```
-
-종료는 `Ctrl+C`입니다. 전체 옵션은 `./airodump --help`에서 확인할 수 있습니다.
-
-## 테스트
-
-테스트는 실제 무선 어댑터 없이 만든 Radiotap/802.11 패킷으로 파서와 집계 로직을
-확인합니다.
-
-```sh
-make test
-```
-
-## 시연 영상 체크리스트
-
-1. monitor mode 인터페이스가 보이는 장면
-2. `make`가 성공하는 장면
-3. `sudo ./airodump mon0 --channels 1,6,11` 실행 장면
-4. AP의 BSSID/Beacons/#Data/PWR/ENC/ESSID가 갱신되는 장면
-5. Station 및 Probe Request가 나타나는 장면
-6. `Ctrl+C`로 정상 종료하는 장면
-
-캡처는 본인 소유 또는 명시적으로 허가받은 네트워크에서만 수행합니다.
