@@ -22,7 +22,7 @@ struct RadioInfo {
   std::optional<std::uint16_t> frequency_mhz;
 };
 
-enum class FrameKind { Other, Beacon, ProbeRequest, Data };
+enum class FrameKind { Other, Beacon, ProbeResponse, ProbeRequest, Data };
 
 struct FrameInfo {
   FrameKind kind = FrameKind::Other;

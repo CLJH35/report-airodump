@@ -166,10 +166,10 @@ std::optional<FrameInfo> parse_dot11(const std::uint8_t *frame,
   const bool from_ds = (fc & 0x0200) != 0;
 
   FrameInfo result;
-  if (type == 0 && subtype == 8) { // Beacon
+  if (type == 0 && (subtype == 8 || subtype == 5)) { // Beacon/Probe Response
     if (length < 36)
       return std::nullopt;
-    result.kind = FrameKind::Beacon;
+    result.kind = subtype == 8 ? FrameKind::Beacon : FrameKind::ProbeResponse;
     result.bssid = mac_at(frame + 16);
     const std::uint16_t capability = le16(frame + 34);
     const Tags tags = parse_tags(frame + 36, length - 36);

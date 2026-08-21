@@ -41,6 +41,12 @@ std::vector<std::uint8_t> beacon() {
   return frame;
 }
 
+std::vector<std::uint8_t> probe_response() {
+  auto frame = beacon();
+  frame[0] = 0x50;
+  return frame;
+}
+
 std::vector<std::uint8_t> data_from_ap() {
   std::vector<std::uint8_t> frame(24, 0);
   frame[0] = 0x08;
@@ -86,6 +92,14 @@ int main() {
   assert(beacon_info->essid && *beacon_info->essid == "test");
   assert(beacon_info->encryption == "WPA2");
 
+  const auto raw_response = probe_response();
+  const auto response_info =
+      airodump::parse_dot11(raw_response.data(), raw_response.size());
+  assert(response_info &&
+         response_info->kind == airodump::FrameKind::ProbeResponse);
+  assert(response_info->bssid->to_string() == "00:11:22:33:44:55");
+  assert(response_info->essid && *response_info->essid == "test");
+
   const auto raw_data = data_from_ap();
   const auto data_info =
       airodump::parse_dot11(raw_data.data(), raw_data.size());
@@ -104,6 +118,7 @@ int main() {
 
   airodump::Scanner scanner;
   scanner.ingest(*radio, *beacon_info);
+  scanner.ingest(*radio, *response_info);
   scanner.ingest(*radio, *data_info);
   scanner.ingest(*radio, *probe_info);
   assert(scanner.access_points().size() == 1);

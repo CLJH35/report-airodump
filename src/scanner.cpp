@@ -40,12 +40,15 @@ void Scanner::ingest(const RadioInfo &radio, const FrameInfo &frame) {
   const int channel =
       radio.frequency_mhz ? frequency_to_channel(*radio.frequency_mhz) : 0;
 
-  if (frame.kind == FrameKind::Beacon && frame.bssid) {
+  if ((frame.kind == FrameKind::Beacon ||
+       frame.kind == FrameKind::ProbeResponse) &&
+      frame.bssid) {
     auto [it, inserted] = aps_.try_emplace(*frame.bssid);
     AccessPoint &ap = it->second;
     if (inserted)
       ap.bssid = *frame.bssid;
-    ++ap.beacons;
+    if (frame.kind == FrameKind::Beacon)
+      ++ap.beacons;
     ap.last_seen = now;
     if (power)
       ap.power = power;
