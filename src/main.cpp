@@ -183,6 +183,13 @@ open_capture(const std::string &interface_name) {
   if (activation > 0)
     std::cerr << "pcap warning: " << pcap_geterr(raw) << '\n';
 
+  // Some Linux capture drivers do not return from pcap_next_ex() until the
+  // first packet arrives, even when a read timeout was configured.  Use
+  // non-blocking capture so the terminal UI and signal handling stay alive on
+  // quiet channels.
+  if (pcap_setnonblock(raw, 1, error) != 0)
+    throw std::runtime_error(error);
+
   if (pcap_datalink(raw) != DLT_IEEE802_11_RADIO) {
     throw std::runtime_error("interface does not provide radiotap headers; "
                              "enable monitor mode first");
@@ -206,6 +213,9 @@ int main(int argc, char **argv) {
                          options.hop_milliseconds);
     airodump::Scanner scanner;
     auto next_render = std::chrono::steady_clock::now();
+    scanner.render(options.interface_name, options.clear_screen);
+    next_render =
+        std::chrono::steady_clock::now() + std::chrono::milliseconds(500);
 
     while (!stop_requested) {
       pcap_pkthdr *header = nullptr;
@@ -215,6 +225,8 @@ int main(int argc, char **argv) {
         throw std::runtime_error(pcap_geterr(capture.get()));
       if (status == -2)
         break;
+      if (status == 0)
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       if (status == 1 && header != nullptr) {
         const auto radio = airodump::parse_radiotap(packet, header->caplen);
         if (radio && radio->header_length < header->caplen) {
