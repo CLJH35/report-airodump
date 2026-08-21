@@ -47,4 +47,4 @@ private:
   std::map<MacAddress, Station> stations_;
 };
 
-} // namespace airodump
+}

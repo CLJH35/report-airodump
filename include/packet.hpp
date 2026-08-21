@@ -39,4 +39,4 @@ std::optional<FrameInfo> parse_dot11(const std::uint8_t *frame,
                                      std::size_t length);
 int frequency_to_channel(std::uint16_t frequency_mhz);
 
-} // namespace airodump
+}

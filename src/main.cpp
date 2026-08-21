@@ -21,6 +21,7 @@ namespace {
 
 volatile std::sig_atomic_t stop_requested = 0;
 
+// ctrl+c 처리
 void handle_signal(int) { stop_requested = 1; }
 
 struct Options {
@@ -116,9 +117,9 @@ bool safe_interface_name(const std::string &name) {
 }
 
 bool set_channel(const std::string &interface_name, int channel) {
-  // Both values were strictly validated while parsing the command line.
+  // iw 명령어로 채널 변경
   const std::string command = "iw dev " + interface_name + " set channel " +
-                              std::to_string(channel) + " >/dev/null 2>&1";
+                               std::to_string(channel) + " >/dev/null 2>&1";
   return std::system(command.c_str()) == 0;
 }
 
@@ -183,10 +184,7 @@ open_capture(const std::string &interface_name) {
   if (activation > 0)
     std::cerr << "pcap warning: " << pcap_geterr(raw) << '\n';
 
-  // Some Linux capture drivers do not return from pcap_next_ex() until the
-  // first packet arrives, even when a read timeout was configured.  Use
-  // non-blocking capture so the terminal UI and signal handling stay alive on
-  // quiet channels.
+  // 패킷이 없어도 화면이 멈추지 않게 설정
   if (pcap_setnonblock(raw, 1, error) != 0)
     throw std::runtime_error(error);
 
@@ -197,7 +195,7 @@ open_capture(const std::string &interface_name) {
   return handle;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv) {
   try {
@@ -228,6 +226,7 @@ int main(int argc, char **argv) {
       if (status == 0)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       if (status == 1 && header != nullptr) {
+        // radiotap 다음에 802.11 frame 이 있음
         const auto radio = airodump::parse_radiotap(packet, header->caplen);
         if (radio && radio->header_length < header->caplen) {
           const auto frame =

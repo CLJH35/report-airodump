@@ -17,11 +17,11 @@ void put_mac(std::vector<std::uint8_t> &frame, std::size_t offset,
 
 std::vector<std::uint8_t> radio_header() {
   std::vector<std::uint8_t> radio(13, 0);
-  radio[2] = 13;   // radiotap length
-  radio[4] = 0x28; // channel + antenna signal fields
-  radio[8] = 0x6c; // 2412 MHz, little endian
+  radio[2] = 13;   // radiotap 길이
+  radio[4] = 0x28; // channel, signal 있음
+  radio[8] = 0x6c; // 2412 mhz
   radio[9] = 0x09;
-  radio[12] = 0xd6; // -42 dBm
+  radio[12] = 0xd6; // -42 dbm
   return radio;
 }
 
@@ -29,14 +29,14 @@ std::vector<std::uint8_t> beacon() {
   std::vector<std::uint8_t> frame(44, 0);
   frame[0] = 0x80;
   put_mac(frame, 16, {0x00, 0x11, 0x22, 0x33, 0x44, 0x55});
-  frame[34] = 0x10; // privacy capability
-  frame[36] = 0;    // SSID tag
+  frame[34] = 0x10; // 암호화 사용
+  frame[36] = 0;    // ssid tag
   frame[37] = 4;
   frame[38] = 't';
   frame[39] = 'e';
   frame[40] = 's';
   frame[41] = 't';
-  frame[42] = 48; // RSN tag
+  frame[42] = 48; // rsn tag
   frame[43] = 0;
   return frame;
 }
@@ -50,7 +50,7 @@ std::vector<std::uint8_t> probe_response() {
 std::vector<std::uint8_t> data_from_ap() {
   std::vector<std::uint8_t> frame(24, 0);
   frame[0] = 0x08;
-  frame[1] = 0x02; // From DS
+  frame[1] = 0x02; // from ds
   put_mac(frame, 4, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff});
   put_mac(frame, 10, {0x00, 0x11, 0x22, 0x33, 0x44, 0x55});
   return frame;
@@ -70,7 +70,7 @@ std::vector<std::uint8_t> probe_request() {
   return frame;
 }
 
-} // namespace
+}
 
 int main() {
   const auto raw_radio = radio_header();

@@ -25,6 +25,7 @@ std::size_t aligned(std::size_t offset, std::size_t alignment) {
 }
 
 MacAddress mac_at(const std::uint8_t *p) {
+  // mac address 가져오기
   MacAddress result;
   std::copy(p, p + result.bytes.size(), result.bytes.begin());
   return result;
@@ -38,6 +39,7 @@ struct Tags {
 };
 
 Tags parse_tags(const std::uint8_t *p, std::size_t length) {
+  // ssid 와 암호화 tag 확인
   Tags tags;
   std::size_t offset = 0;
   while (offset + 2 <= length) {
@@ -57,7 +59,7 @@ Tags parse_tags(const std::uint8_t *p, std::size_t length) {
       tags.ssid = ssid;
     } else if (id == 48) {
       tags.rsn = true;
-      // RSN: version(2), group(4), pairwise count/list, AKM count/list.
+      // rsn 안에 있는 akm 확인
       if (size >= 8) {
         std::size_t pos = offset + 2 + 4;
         const std::size_t end = offset + size;
@@ -89,7 +91,7 @@ Tags parse_tags(const std::uint8_t *p, std::size_t length) {
   return tags;
 }
 
-} // namespace
+}
 
 std::string MacAddress::to_string() const {
   std::ostringstream out;
@@ -103,7 +105,8 @@ std::string MacAddress::to_string() const {
 }
 
 std::optional<RadioInfo> parse_radiotap(const std::uint8_t *packet,
-                                        std::size_t length) {
+                                         std::size_t length) {
+  // radiotap 길이 확인
   if (packet == nullptr || length < 8 || packet[0] != 0)
     return std::nullopt;
 
@@ -140,13 +143,13 @@ std::optional<RadioInfo> parse_radiotap(const std::uint8_t *packet,
     return value;
   };
 
-  take(0, 8, 8); // TSFT
+  take(0, 8, 8); // tsft
   take(1, 1, 1); // flags
-  take(2, 1, 1); // legacy rate
+  take(2, 1, 1); // rate
   if (const std::uint8_t *channel = take(3, 2, 4)) {
     result.frequency_mhz = le16(channel);
   }
-  take(4, 2, 2); // FHSS
+  take(4, 2, 2); // fhss
   if (const std::uint8_t *signal = take(5, 1, 1)) {
     result.signal_dbm = static_cast<std::int8_t>(*signal);
   }
@@ -166,7 +169,8 @@ std::optional<FrameInfo> parse_dot11(const std::uint8_t *frame,
   const bool from_ds = (fc & 0x0200) != 0;
 
   FrameInfo result;
-  if (type == 0 && (subtype == 8 || subtype == 5)) { // Beacon/Probe Response
+  // beacon 이랑 probe response 는 ap 정보가 들어있음
+  if (type == 0 && (subtype == 8 || subtype == 5)) {
     if (length < 36)
       return std::nullopt;
     result.kind = subtype == 8 ? FrameKind::Beacon : FrameKind::ProbeResponse;
@@ -185,12 +189,14 @@ std::optional<FrameInfo> parse_dot11(const std::uint8_t *frame,
     } else {
       result.encryption = "OPN";
     }
-  } else if (type == 0 && subtype == 4) { // Probe Request
+  } else if (type == 0 && subtype == 4) {
+    // 연결 안 된 station 도 찾기
     result.kind = FrameKind::ProbeRequest;
     result.station = mac_at(frame + 10);
     result.station_transmitted = true;
     result.essid = parse_tags(frame + 24, length - 24).ssid;
-  } else if (type == 2) { // Data/QoS Data
+  } else if (type == 2) {
+    // to ds, from ds 에 따라 주소 위치가 다름
     result.kind = FrameKind::Data;
     if (to_ds && !from_ds) {
       result.bssid = mac_at(frame + 4);
@@ -220,4 +226,4 @@ int frequency_to_channel(std::uint16_t frequency) {
   return 0;
 }
 
-} // namespace airodump
+}

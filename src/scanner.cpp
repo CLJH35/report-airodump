@@ -31,7 +31,7 @@ void append_probe(std::string &probes, const std::string &probe) {
   probes += probe;
 }
 
-} // namespace
+}
 
 void Scanner::ingest(const RadioInfo &radio, const FrameInfo &frame) {
   const auto now = Clock::now();
@@ -43,6 +43,7 @@ void Scanner::ingest(const RadioInfo &radio, const FrameInfo &frame) {
   if ((frame.kind == FrameKind::Beacon ||
        frame.kind == FrameKind::ProbeResponse) &&
       frame.bssid) {
+    // ap 정보 저장
     auto [it, inserted] = aps_.try_emplace(*frame.bssid);
     AccessPoint &ap = it->second;
     if (inserted)
@@ -62,6 +63,7 @@ void Scanner::ingest(const RadioInfo &radio, const FrameInfo &frame) {
   }
 
   if (frame.kind == FrameKind::Data) {
+    // data 개수와 station frame 개수 저장
     if (frame.bssid) {
       auto [it, inserted] = aps_.try_emplace(*frame.bssid);
       if (inserted)
@@ -86,6 +88,7 @@ void Scanner::ingest(const RadioInfo &radio, const FrameInfo &frame) {
   }
 
   if (frame.kind == FrameKind::ProbeRequest && frame.station) {
+    // ap 에 연결되지 않은 station
     auto [it, inserted] = stations_.try_emplace(*frame.station);
     Station &station = it->second;
     if (inserted)
@@ -100,7 +103,8 @@ void Scanner::ingest(const RadioInfo &radio, const FrameInfo &frame) {
 }
 
 void Scanner::render(const std::string &interface_name,
-                     bool clear_screen) const {
+                      bool clear_screen) const {
+  // 터미널 화면 다시 출력
   if (clear_screen)
     std::cout << "\033[2J\033[H";
   std::cout << "airodump  interface: " << interface_name
@@ -142,4 +146,4 @@ void Scanner::render(const std::string &interface_name,
   std::cout << std::flush;
 }
 
-} // namespace airodump
+}
