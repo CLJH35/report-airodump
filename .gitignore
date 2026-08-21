@@ -1,0 +1,7 @@
+airodump
+parser_test
+src/*.o
+*.pcap
+*.pcapng
+/work/
+/outputs/
